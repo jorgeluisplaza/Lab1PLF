@@ -2,6 +2,20 @@
 #include <stdio.h>
 #include <string.h>
 
+char reservedWords[128][32] = {"main", "auto", "extern", "register", "static", 
+								"break", "continue", "default", 
+								"do", "while", "for", "goto", "if", "else", 
+								"return", "sizeof", "short", "int", "unsigned",
+								"long", "float", "char", "double"};
+
+char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ".",
+									";", "*", "=", ":", "&", "-",
+									"~", "|", "==", "!=", "<",
+									">", "<=", ">=", "&&", "||",
+									"!", "?", "+", "/", "%",
+									"<<", ">>", "^", "++", "--"};
+
+
 int main(int argc, char *argv[]){
 	// Si no hay parametros
 	if(argc == 1){
@@ -47,6 +61,82 @@ int main(int argc, char *argv[]){
 	}
 	else{
 		exitFile = fopen(argv[2], "w");
-		fprintf(exitFile, "Hola Como Estas\n");
 	}
+
+	// Se declara la linea del archivo
+	char line[1024];
+
+	// Se declara la lista de palabras
+	char fileWords[1024][64];
+
+	// Contadores para los ciclos for
+	int i, j, k, h, l;
+
+	//Para contar la cantidad de lineas obtenidas
+	int wordCount = 0;
+
+	// Se recorre el archivo
+	while(fgets(line, 1024, entryFile)) {
+		char * word = strtok(line, " 	\n");
+		while(word != NULL) {
+			strcpy(fileWords[wordCount], word);
+			wordCount++;
+			word = strtok(NULL, " 	\n");
+		}
+	}
+	printf("El valor de wordCount es %i\n", wordCount);
+	int foundReservedWord = 0;
+	for (i = 0; i < wordCount; ++i)
+	{
+		printf("%s\n", fileWords[i]);
+		for(j = 0; j < 32; j++){
+			if(strcmp(fileWords[i], reservedWords[j]) == 0) {
+				printf("Encontre una palabra reservada...\n");
+				printf("La palabra reservada es: %s\n", fileWords[i]);
+				fprintf(exitFile, "%s\n", fileWords[i]);
+				foundReservedWord = 1;
+			}
+		}
+
+		for (k = 0; k < 32; ++k){
+			for(h = 0; h < 32; h++) {
+				if(fileWords[i][k] == '\0') {
+					break;
+				}
+				else if(fileWords[i][k] == operatorsAndSigns[h][0]) {
+					printf("Encontre un operador o signo...\n");
+					printf("Palabra es: %s \n", fileWords[i]);
+					printf("Letra de palabra es: %c\n", fileWords[i][k]);
+					printf("Operador o signo: %c\n", operatorsAndSigns[h][0]);
+					fprintf(exitFile, "%c\n", fileWords[i][k]);
+				}
+			}
+		}
+
+		if(foundReservedWord == 0) {
+			int wordsTemporalCount = 0;
+			char temporalWords[128][32];
+			char * wordAux = strtok(fileWords[i], "(){}");
+			while(wordAux != NULL) {
+            	strcpy(temporalWords[wordsTemporalCount], wordAux);
+            	wordsTemporalCount++;
+				wordAux = strtok(NULL, "(){}");
+			}
+
+			for(l = 0; l < wordsTemporalCount; l++) {
+				for(j = 0; j < 32; j++) {
+					if(strcmp(temporalWords[l], reservedWords[j]) == 0) {
+						printf("Encontre una palabra reservada 2.0...\n");
+						printf("La palabra reservada es: %s\n", temporalWords[l]);
+						fprintf(exitFile, "%s\n", temporalWords[l]);					
+					}
+				}
+			}
+		}
+		foundReservedWord = 0;
+	}
+
+	// Se cierran los archivos
+	fclose(entryFile);
+	fclose(exitFile);
 }
