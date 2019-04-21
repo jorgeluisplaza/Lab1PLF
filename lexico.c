@@ -2,22 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 
-char reservedWords[128][32] = {"main", "auto", "extern", "register", "static", 
-								"break", "continue", "default", 
-								"do", "while", "for", "goto", "if", "else", 
-								"return", "sizeof", "short", "int", "unsigned",
-								"long", "float", "char", "double", "==", "!=", 
-								"<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
+char reservedWordsAndEspecialSigns[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "do", "while", "for", "goto", "if", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "double", "==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
 
-char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ".",
-									";", "*", "=", ":", "&", "-",
-									"~", "|", "<",
-									">",
-									"!", "?", "+", "/", "%",
-									"^"};
+char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ".", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
 
 int main (int argc, char *argv[]) {
+
 	// Si no hay parametros
 	if (argc == 1) {
 		printf("Error: Faltan par\240metros.\n");
@@ -82,15 +73,22 @@ int main (int argc, char *argv[]) {
 		while (word != NULL) {
 			strcpy(fileWords[wordCount], word);
 			wordCount++;
-			word = strtok(NULL, " 	\n");
+			word = strtok(NULL, " 	 \" \n  \0");
 		}
 	}
 	int foundReservedWord = 0;
 	for (i = 0; i < wordCount; ++i)
 	{
 		for (j = 0; j < 32; j++){
-			if (strcmp(fileWords[i], reservedWords[j]) == 0) {
-				fprintf(exitFile, "%s\n", strupr(fileWords[i]));
+			if (strcmp(fileWords[i], reservedWordsAndEspecialSigns[j]) == 0) {
+				int c = 0;
+				while(fileWords[i][c] != '\0') {
+					if(fileWords[i][c] >= 'a' && fileWords[i][c] <= 'z') {
+						fileWords[i][c] = fileWords[i][c] - 32;
+					}
+					c++;
+				}
+				fprintf(exitFile, "%s\n", fileWords[i]);
 				foundReservedWord = 1;
 			}
 		}
@@ -119,8 +117,15 @@ int main (int argc, char *argv[]) {
 
 			for (l = 0; l < wordsTemporalCount; l++) {
 				for (j = 0; j < 32; j++) {
-					if (strcmp(temporalWords[l], reservedWords[j]) == 0) {
-						fprintf(exitFile, "%s\n", strupr(temporalWords[l]));					
+					if (strcmp(temporalWords[l], reservedWordsAndEspecialSigns[j]) == 0) {
+						int c = 0;
+						while(temporalWords[l][c] != '\0') {
+							if(temporalWords[l][c] >= 'a' && temporalWords[l][c] <= 'z') {
+							temporalWords[l][c] = temporalWords[l][c] - 32;
+							}
+						c++;
+						}				
+						fprintf(exitFile, "%s\n", temporalWords[l]);					
 					}
 				}
 			}
