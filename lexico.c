@@ -90,7 +90,7 @@ int main (int argc, char *argv[]) {
 	{
 		for (j = 0; j < 32; j++){
 			if (strcmp(fileWords[i], reservedWords[j]) == 0) {
-				fprintf(exitFile, "%s\n", fileWords[i]);
+				fprintf(exitFile, "%s\n", strupr(fileWords[i]));
 				foundReservedWord = 1;
 			}
 		}
@@ -120,7 +120,7 @@ int main (int argc, char *argv[]) {
 			for (l = 0; l < wordsTemporalCount; l++) {
 				for (j = 0; j < 32; j++) {
 					if (strcmp(temporalWords[l], reservedWords[j]) == 0) {
-						fprintf(exitFile, "%s\n", temporalWords[l]);					
+						fprintf(exitFile, "%s\n", strupr(temporalWords[l]));					
 					}
 				}
 			}
