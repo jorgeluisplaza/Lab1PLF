@@ -6,31 +6,32 @@ char reservedWords[128][32] = {"main", "auto", "extern", "register", "static",
 								"break", "continue", "default", 
 								"do", "while", "for", "goto", "if", "else", 
 								"return", "sizeof", "short", "int", "unsigned",
-								"long", "float", "char", "double"};
+								"long", "float", "char", "double", "==", "!=", 
+								"<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
 
 char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ".",
 									";", "*", "=", ":", "&", "-",
-									"~", "|", "==", "!=", "<",
-									">", "<=", ">=", "&&", "||",
+									"~", "|", "<",
+									">",
 									"!", "?", "+", "/", "%",
-									"<<", ">>", "^", "++", "--"};
+									"^"};
 
 
-int main(int argc, char *argv[]){
+int main (int argc, char *argv[]) {
 	// Si no hay parametros
-	if(argc == 1){
+	if (argc == 1) {
 		printf("Error: Faltan par\240metros.\n");
 		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
 		return 0;
 	}
 	// Si solo hay un parametro
-	else if(argc == 2){
+	else if (argc == 2) {
 		printf("Error: Falta par\240metro.\n");
 		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
 		return 0;
 	}
 	// Si hay demasiados parametros
-	else if(argc > 3){
+	else if (argc > 3) {
 		printf("Error: Demasiados par\240metros.\n");
 		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
 		return 0;
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]){
 	entryFile = fopen(argv[1], "r");
 
 	// Se comprueba si existe
-	if(entryFile == NULL){
+	if (entryFile == NULL) {
 		printf("Error: El archivo de entrada no existe.\n");
 		return 0;
 	}
@@ -55,11 +56,11 @@ int main(int argc, char *argv[]){
 	exitFile = fopen(argv[2], "r");
 
 	// Se comprueba si existe
-	if(exitFile != NULL){
+	if (exitFile != NULL){
 		printf("Error: El archivo de salida ya existe.\n");
 		return 0;	
 	}
-	else{
+	else {
 		exitFile = fopen(argv[2], "w");
 	}
 
@@ -76,58 +77,49 @@ int main(int argc, char *argv[]){
 	int wordCount = 0;
 
 	// Se recorre el archivo
-	while(fgets(line, 1024, entryFile)) {
+	while (fgets(line, 1024, entryFile)) {
 		char * word = strtok(line, " 	\n");
-		while(word != NULL) {
+		while (word != NULL) {
 			strcpy(fileWords[wordCount], word);
 			wordCount++;
 			word = strtok(NULL, " 	\n");
 		}
 	}
-	printf("El valor de wordCount es %i\n", wordCount);
 	int foundReservedWord = 0;
 	for (i = 0; i < wordCount; ++i)
 	{
-		printf("%s\n", fileWords[i]);
-		for(j = 0; j < 32; j++){
-			if(strcmp(fileWords[i], reservedWords[j]) == 0) {
-				printf("Encontre una palabra reservada...\n");
-				printf("La palabra reservada es: %s\n", fileWords[i]);
+		for (j = 0; j < 32; j++){
+			if (strcmp(fileWords[i], reservedWords[j]) == 0) {
 				fprintf(exitFile, "%s\n", fileWords[i]);
 				foundReservedWord = 1;
 			}
 		}
-
-		for (k = 0; k < 32; ++k){
-			for(h = 0; h < 32; h++) {
-				if(fileWords[i][k] == '\0') {
-					break;
-				}
-				else if(fileWords[i][k] == operatorsAndSigns[h][0]) {
-					printf("Encontre un operador o signo...\n");
-					printf("Palabra es: %s \n", fileWords[i]);
-					printf("Letra de palabra es: %c\n", fileWords[i][k]);
-					printf("Operador o signo: %c\n", operatorsAndSigns[h][0]);
-					fprintf(exitFile, "%c\n", fileWords[i][k]);
+		if (foundReservedWord == 0){
+			for (k = 0; k < 32; ++k) {
+				for (h = 0; h < 32; h++) {
+					if (fileWords[i][k] == '\0') {
+						break;
+					}
+					else if (fileWords[i][k] == operatorsAndSigns[h][0]) {
+						fprintf(exitFile, "%c\n", fileWords[i][k]);
+					}
 				}
 			}
 		}
 
-		if(foundReservedWord == 0) {
+		if (foundReservedWord == 0) {
 			int wordsTemporalCount = 0;
 			char temporalWords[128][32];
 			char * wordAux = strtok(fileWords[i], "(){}");
-			while(wordAux != NULL) {
+			while (wordAux != NULL) {
             	strcpy(temporalWords[wordsTemporalCount], wordAux);
             	wordsTemporalCount++;
 				wordAux = strtok(NULL, "(){}");
 			}
 
-			for(l = 0; l < wordsTemporalCount; l++) {
-				for(j = 0; j < 32; j++) {
-					if(strcmp(temporalWords[l], reservedWords[j]) == 0) {
-						printf("Encontre una palabra reservada 2.0...\n");
-						printf("La palabra reservada es: %s\n", temporalWords[l]);
+			for (l = 0; l < wordsTemporalCount; l++) {
+				for (j = 0; j < 32; j++) {
+					if (strcmp(temporalWords[l], reservedWords[j]) == 0) {
 						fprintf(exitFile, "%s\n", temporalWords[l]);					
 					}
 				}
