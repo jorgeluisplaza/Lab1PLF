@@ -10,9 +10,11 @@ typedef struct Word {
 
 void removeSubstr (char *string, char *sub);
 
-char reservedWordsAndEspecialSigns[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "do", "while", "if", "goto", "for", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "double", "==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--", "(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
+char reservedWords[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "do", "while", "if", "goto", "for", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "double", "==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--", "(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
-char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
+char* relationalOperators[10] = {"==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
+
+char * operatorsAndSigns[21] = {"(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
 int main (int argc, char *argv[]) {
 
@@ -91,7 +93,7 @@ int main (int argc, char *argv[]) {
 		for (j = 0; j < 32; j++){
 
 			// Si es una palabra reservada
-			if (strcmp(fileWords[i], reservedWordsAndEspecialSigns[j]) == 0) {
+			if (strcmp(fileWords[i], reservedWords[j]) == 0) {
 				int c = 0;
 
 				// Se transoforma a mayusculas
@@ -108,66 +110,55 @@ int main (int argc, char *argv[]) {
 			}
 		}
 		if (foundReservedWord == 0) {
-			int c = 0;
-			Word* wordList;
-			wordList = (Word*)malloc(sizeof(Word) * 64);
-			for (j = 0; j < 33; j++) {
-				if (strstr(fileWords[i], reservedWordsAndEspecialSigns[j]) != NULL) {
-					strcpy(wordList[c].sentence, strstr(fileWords[i], reservedWordsAndEspecialSigns[j]));
-					strcpy(wordList[c].word, reservedWordsAndEspecialSigns[j]);
-					wordList[c].len = strlen(strstr(fileWords[i], reservedWordsAndEspecialSigns[j]));
-					printf("Frase es: %s\n", wordList[c].sentence);
-					printf("Palabra es: %s\n", wordList[c].word);
-					printf("Largo es: %i\n", wordList[c].len);
-					if(j >= 23) {
-						removeSubstr(fileWords[i], wordList[c].word);
-					}
-					c++;
-				}
-			}
-			int count = 0;
-			int wordLen = strlen(fileWords[i]);
-			while(fileWords[i][count] != '\0') {
-				for(k = 0; k < 21; k++) {
-					if(fileWords[i][count] == operatorsAndSigns[k][0]) {
-						printf("ENTREEEE AQUI\n");
-						printf("LA FRASE ES: %s\n", fileWords[i]);
-						strcpy(wordList[c].sentence, fileWords[i]);
-						strcpy(wordList[c].word, operatorsAndSigns[k]);
-						printf("El signo es %s\n", wordList[c].word);
-						wordList[c].len = wordLen - count;
-						c++;
-						break;
-					}
-				}
-				count++;
-			}
-			//c--;
-			for(k = 0; k < c; k++) {
-				for(h = k + 1; h < c; h++) {
-					if(wordList[h].len > wordList[k].len) {
-						Word aux = wordList[k];
-						wordList[k] = wordList[h];
-						wordList[h] = aux;
-					}
-				}
-			}
-			char auxSentence[64];
-			strcpy(auxSentence, wordList[0].sentence);
-			printf("c vale: %d\n", c);
-			for(k = 0; k < c; k++) {
-				printf("auxSentence: %s\n", auxSentence);
-				printf("La palabra a escribir es: %s\n", wordList[k].word);
-				int auxCount = 0;
-				while(wordList[k].word[auxCount] != '\0') {
-					if(wordList[k].word[auxCount] >= 'a' && wordList[k].word[auxCount] <= 'z') {
-						wordList[k].word[auxCount] = wordList[k].word[auxCount] - 32;
-					}
-					auxCount++;
-				}
-				fprintf(exitFile, "%s\n", wordList[k].word);
-				removeSubstr(auxSentence, wordList[k].word);
-			}
+
+			char * sentence = fileWords[i];
+    		int sentenceLen = strlen(sentence);
+    		int wordPosition = 0, auxCount = 0, foundLexicComponent = 0;
+    		while(sentenceLen >= wordPosition + 1) {
+
+        		foundLexicComponent = 0;
+
+        		for(j = 0; j < 10; j++) {
+        			char * relationalOperator = relationalOperators[j];
+        			if(strncmp(sentence, relationalOperator, 2) == 0) {
+        				fprintf(exitFile, "%s\n", relationalOperator);
+        				wordPosition = wordPosition + 2;
+        				sentence = sentence + 2;
+        				foundLexicComponent = 1;
+        				break;
+        			}
+        		}
+
+        		if(foundLexicComponent == 0){
+        			for(j = 0; j < 21; j++) {
+        				char * operatorOrSign = operatorsAndSigns[j];
+        				if(strncmp(sentence, operatorOrSign, 1) == 0) {
+        					fprintf(exitFile, "%s\n", operatorOrSign);
+        					wordPosition = wordPosition + 1;
+        					sentence = sentence + 1;
+        					foundLexicComponent = 1;
+        					break;
+        				}
+        			}        			
+        		}
+
+        		if(foundLexicComponent == 0){
+        			for(j = 0; j < 23; j++) {
+        				char * reservedWord = reservedWords[j];
+        				if(strncmp(sentence, reservedWord, strlen(reservedWord)) == 0) {
+        					fprintf(exitFile, "%s\n", reservedWord);
+        					wordPosition = wordPosition + strlen(reservedWord);
+        					sentence = sentence + strlen(reservedWord);
+        					foundLexicComponent = 1;
+        					break;
+        				}
+        			}
+        		}
+        		if(foundLexicComponent == 0) {
+        			wordPosition++;
+        			sentence++;
+        		}
+    		}
 		}
 		foundReservedWord = 0;
 	}
