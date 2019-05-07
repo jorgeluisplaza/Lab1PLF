@@ -2,10 +2,17 @@
 #include <stdio.h>
 #include <string.h>
 
-char reservedWordsAndEspecialSigns[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "do", "while", "for", "goto", "if", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "double", "==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
+typedef struct Word {
+	char sentence[64];
+	char word[64];
+	int len;
+} Word;
 
-char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ".", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
+void removeSubstr (char *string, char *sub);
 
+char reservedWordsAndEspecialSigns[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "do", "while", "if", "goto", "for", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "double", "==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--", "(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
+
+char operatorsAndSigns[128][16] = {"(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
 int main (int argc, char *argv[]) {
 
@@ -27,7 +34,7 @@ int main (int argc, char *argv[]) {
 		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
 		return 0;
 	}
-
+	
 	// Se declara archivo de entrada
 	FILE * entryFile;
 
@@ -67,7 +74,7 @@ int main (int argc, char *argv[]) {
 	//Para contar la cantidad de lineas obtenidas
 	int wordCount = 0;
 
-	// Se recorre el archivo
+	// Se recorre el archivo 
 	while (fgets(line, 1024, entryFile)) {
 		char * word = strtok(line, " 	\n");
 		while (word != NULL) {
@@ -76,58 +83,90 @@ int main (int argc, char *argv[]) {
 			word = strtok(NULL, " 	 \" \n  \0");
 		}
 	}
+
+	// Auxiliar para saber si encuentro una palabra reservada
 	int foundReservedWord = 0;
 	for (i = 0; i < wordCount; ++i)
 	{
 		for (j = 0; j < 32; j++){
+
+			// Si es una palabra reservada
 			if (strcmp(fileWords[i], reservedWordsAndEspecialSigns[j]) == 0) {
 				int c = 0;
+
+				// Se transoforma a mayusculas
 				while(fileWords[i][c] != '\0') {
 					if(fileWords[i][c] >= 'a' && fileWords[i][c] <= 'z') {
 						fileWords[i][c] = fileWords[i][c] - 32;
 					}
 					c++;
 				}
+
+				// Se escribe en el archivo
 				fprintf(exitFile, "%s\n", fileWords[i]);
 				foundReservedWord = 1;
 			}
 		}
-		if (foundReservedWord == 0){
-			for (k = 0; k < 32; ++k) {
-				for (h = 0; h < 32; h++) {
-					if (fileWords[i][k] == '\0') {
+		if (foundReservedWord == 0) {
+			int c = 0;
+			Word* wordList;
+			wordList = (Word*)malloc(sizeof(Word) * 64);
+			for (j = 0; j < 33; j++) {
+				if (strstr(fileWords[i], reservedWordsAndEspecialSigns[j]) != NULL) {
+					strcpy(wordList[c].sentence, strstr(fileWords[i], reservedWordsAndEspecialSigns[j]));
+					strcpy(wordList[c].word, reservedWordsAndEspecialSigns[j]);
+					wordList[c].len = strlen(strstr(fileWords[i], reservedWordsAndEspecialSigns[j]));
+					printf("Frase es: %s\n", wordList[c].sentence);
+					printf("Palabra es: %s\n", wordList[c].word);
+					printf("Largo es: %i\n", wordList[c].len);
+					if(j >= 23) {
+						removeSubstr(fileWords[i], wordList[c].word);
+					}
+					c++;
+				}
+			}
+			int count = 0;
+			int wordLen = strlen(fileWords[i]);
+			while(fileWords[i][count] != '\0') {
+				for(k = 0; k < 21; k++) {
+					if(fileWords[i][count] == operatorsAndSigns[k][0]) {
+						printf("ENTREEEE AQUI\n");
+						printf("LA FRASE ES: %s\n", fileWords[i]);
+						strcpy(wordList[c].sentence, fileWords[i]);
+						strcpy(wordList[c].word, operatorsAndSigns[k]);
+						printf("El signo es %s\n", wordList[c].word);
+						wordList[c].len = wordLen - count;
+						c++;
 						break;
 					}
-					else if (fileWords[i][k] == operatorsAndSigns[h][0]) {
-						fprintf(exitFile, "%c\n", fileWords[i][k]);
+				}
+				count++;
+			}
+			//c--;
+			for(k = 0; k < c; k++) {
+				for(h = k + 1; h < c; h++) {
+					if(wordList[h].len > wordList[k].len) {
+						Word aux = wordList[k];
+						wordList[k] = wordList[h];
+						wordList[h] = aux;
 					}
 				}
 			}
-		}
-
-		if (foundReservedWord == 0) {
-			int wordsTemporalCount = 0;
-			char temporalWords[128][32];
-			char * wordAux = strtok(fileWords[i], "(){}");
-			while (wordAux != NULL) {
-            	strcpy(temporalWords[wordsTemporalCount], wordAux);
-            	wordsTemporalCount++;
-				wordAux = strtok(NULL, "(){}");
-			}
-
-			for (l = 0; l < wordsTemporalCount; l++) {
-				for (j = 0; j < 32; j++) {
-					if (strcmp(temporalWords[l], reservedWordsAndEspecialSigns[j]) == 0) {
-						int c = 0;
-						while(temporalWords[l][c] != '\0') {
-							if(temporalWords[l][c] >= 'a' && temporalWords[l][c] <= 'z') {
-							temporalWords[l][c] = temporalWords[l][c] - 32;
-							}
-						c++;
-						}				
-						fprintf(exitFile, "%s\n", temporalWords[l]);					
+			char auxSentence[64];
+			strcpy(auxSentence, wordList[0].sentence);
+			printf("c vale: %d\n", c);
+			for(k = 0; k < c; k++) {
+				printf("auxSentence: %s\n", auxSentence);
+				printf("La palabra a escribir es: %s\n", wordList[k].word);
+				int auxCount = 0;
+				while(wordList[k].word[auxCount] != '\0') {
+					if(wordList[k].word[auxCount] >= 'a' && wordList[k].word[auxCount] <= 'z') {
+						wordList[k].word[auxCount] = wordList[k].word[auxCount] - 32;
 					}
+					auxCount++;
 				}
+				fprintf(exitFile, "%s\n", wordList[k].word);
+				removeSubstr(auxSentence, wordList[k].word);
 			}
 		}
 		foundReservedWord = 0;
@@ -136,4 +175,14 @@ int main (int argc, char *argv[]) {
 	// Se cierran los archivos
 	fclose(entryFile);
 	fclose(exitFile);
+}
+
+void removeSubstr (char *string, char *sub) {
+    char *match = string;
+    int len = strlen(sub);
+    while ((match = strstr(match, sub))) {
+        *match = '\0';
+        strcat(string, match+len);
+                match++;
+    }
 }
