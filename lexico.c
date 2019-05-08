@@ -2,17 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct Word {
-	char sentence[64];
-	char word[64];
-	int len;
-} Word;
+char reservedWords[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "double", "while", "if", "goto", "for", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "do"};
 
-void removeSubstr (char *string, char *sub);
-
-char reservedWords[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "do", "while", "if", "goto", "for", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "double", "==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--", "(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
-
-char* relationalOperators[10] = {"==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
+char * relationalOperators[10] = {"==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
 
 char * operatorsAndSigns[21] = {"(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
@@ -71,7 +63,7 @@ int main (int argc, char *argv[]) {
 	char fileWords[1024][64];
 
 	// Contadores para los ciclos for
-	int i, j, k, h, l;
+	int i, j, h;
 
 	//Para contar la cantidad de lineas obtenidas
 	int wordCount = 0;
@@ -90,13 +82,22 @@ int main (int argc, char *argv[]) {
 	int foundReservedWord = 0;
 	for (i = 0; i < wordCount; ++i)
 	{
-		for (j = 0; j < 32; j++){
+		h = 0;
+		// Se cambia todo a minusculas
+		while(fileWords[i][h] != '\0') {
+			if(fileWords[i][h] >= 'A' && fileWords[i][h] <= 'Z') {
+				fileWords[i][h] = fileWords[i][h] + 32;
+			}
+			h++;
+		}
+
+		for (j = 0; j < 23; j++){
 
 			// Si es una palabra reservada
 			if (strcmp(fileWords[i], reservedWords[j]) == 0) {
 				int c = 0;
 
-				// Se transoforma a mayusculas
+				// Se transforma a mayusculas
 				while(fileWords[i][c] != '\0') {
 					if(fileWords[i][c] >= 'a' && fileWords[i][c] <= 'z') {
 						fileWords[i][c] = fileWords[i][c] - 32;
@@ -109,11 +110,12 @@ int main (int argc, char *argv[]) {
 				foundReservedWord = 1;
 			}
 		}
+
 		if (foundReservedWord == 0) {
 
 			char * sentence = fileWords[i];
     		int sentenceLen = strlen(sentence);
-    		int wordPosition = 0, auxCount = 0, foundLexicComponent = 0;
+    		int wordPosition = 0, foundLexicComponent = 0;
     		while(sentenceLen >= wordPosition + 1) {
 
         		foundLexicComponent = 0;
@@ -146,7 +148,20 @@ int main (int argc, char *argv[]) {
         			for(j = 0; j < 23; j++) {
         				char * reservedWord = reservedWords[j];
         				if(strncmp(sentence, reservedWord, strlen(reservedWord)) == 0) {
-        					fprintf(exitFile, "%s\n", reservedWord);
+
+        					char * ch = (char*)malloc(1 + strlen(reservedWord));
+        					char aux;
+        					strcpy(ch, reservedWord);
+        					int c = 0;
+
+        					while (ch[c] != '\0') {
+      							aux = ch[c];
+      							if (aux >= 'a' && aux <= 'z')
+         							ch[c] = ch[c] - 32;
+      							c++;  
+   							}
+
+   							fprintf(exitFile, "%s\n", ch);
         					wordPosition = wordPosition + strlen(reservedWord);
         					sentence = sentence + strlen(reservedWord);
         					foundLexicComponent = 1;
@@ -166,14 +181,4 @@ int main (int argc, char *argv[]) {
 	// Se cierran los archivos
 	fclose(entryFile);
 	fclose(exitFile);
-}
-
-void removeSubstr (char *string, char *sub) {
-    char *match = string;
-    int len = strlen(sub);
-    while ((match = strstr(match, sub))) {
-        *match = '\0';
-        strcat(string, match+len);
-                match++;
-    }
 }

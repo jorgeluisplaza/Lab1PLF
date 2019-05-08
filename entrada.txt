@@ -1,0 +1,8 @@
+iforformain.;
+registaticautoexternregister
+()*={}[],dowhilegotoelse
+return&-~|intshortunsigned
+longfloatchatdouble
+==!=<><=>=&&||!?+-/%
+&^<<>>++--
+breakcontinuedefault
