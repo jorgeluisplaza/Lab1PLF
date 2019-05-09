@@ -2,15 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 
+
 char reservedWords[128][32] = {"main", "auto", "extern", "register", "static", "break", "continue", "default", "double", "while", "if", "goto", "for", "else", "return", "sizeof", "short", "int", "unsigned", "long", "float", "char", "do"};
 
 char * relationalOperators[10] = {"==", "!=", "<=", ">=", "&&", "||", "<<", ">>", "++", "--"};
 
 char * operatorsAndSigns[21] = {"(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
+int foundLexicComponents(int argc, char * argv[]);
+
 int main (int argc, char *argv[]) {
 
-	// Si no hay parametros
+	foundLexicComponents(argc, argv);
+}
+
+int foundLexicComponents(int argc, char * argv[]) {
+		// Si no hay parametros
 	if (argc == 1) {
 		printf("Error: Faltan par\240metros.\n");
 		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
@@ -113,42 +120,71 @@ int main (int argc, char *argv[]) {
 
 		if (foundReservedWord == 0) {
 
+			// Se obtiene la frase a analizar
 			char * sentence = fileWords[i];
+
+			// Se calcula su largo
     		int sentenceLen = strlen(sentence);
     		int wordPosition = 0, foundLexicComponent = 0;
-    		while(sentenceLen >= wordPosition + 1) {
 
+    		while(sentenceLen > wordPosition) {
+
+    			// Variable para saber si se encontro un componente
         		foundLexicComponent = 0;
 
+        		// Primero se analizar si hay un operador relacional
         		for(j = 0; j < 10; j++) {
+
+        			// Se obtiene de la variable global
         			char * relationalOperator = relationalOperators[j];
+
+        			// Se compara cada variable con la posicion actual de la frase analizada
         			if(strncmp(sentence, relationalOperator, 2) == 0) {
+
+        				// Se escribe en el archivo
         				fprintf(exitFile, "%s\n", relationalOperator);
+
+        				// Todos loos operadores relacionales tienen largo 2, por lo tanto la posicion cambia en 2
         				wordPosition = wordPosition + 2;
         				sentence = sentence + 2;
+
+        				// Se indica que se encontro un componente
         				foundLexicComponent = 1;
+
+        				// Ya encontro uno asi que no es necesario que siga iterando -> break
         				break;
         			}
         		}
 
+        		// Se analiza si hay un signo u operador
         		if(foundLexicComponent == 0){
         			for(j = 0; j < 21; j++) {
         				char * operatorOrSign = operatorsAndSigns[j];
         				if(strncmp(sentence, operatorOrSign, 1) == 0) {
+
+        					// Se escribe en el archivo
         					fprintf(exitFile, "%s\n", operatorOrSign);
+
+        					// Todos los signos u operadores tienen largo 1, la posicion cambia en 1
         					wordPosition = wordPosition + 1;
         					sentence = sentence + 1;
+
+        					// Se indica que se encontro un componente
         					foundLexicComponent = 1;
+
+        					// No es necesario seguir iterando
         					break;
         				}
         			}        			
         		}
 
+        		// Se analiza si hay una palabra reservada
         		if(foundLexicComponent == 0){
         			for(j = 0; j < 23; j++) {
         				char * reservedWord = reservedWords[j];
         				if(strncmp(sentence, reservedWord, strlen(reservedWord)) == 0) {
 
+        					// En este caso se debe pasar a mayusculas antes de escribir
         					char * ch = (char*)malloc(1 + strlen(reservedWord));
         					char aux;
         					strcpy(ch, reservedWord);
@@ -161,14 +197,23 @@ int main (int argc, char *argv[]) {
       							c++;  
    							}
 
+   							// Se escribe
    							fprintf(exitFile, "%s\n", ch);
+
+   							// La posicion depende del largo de la palabra reservada
         					wordPosition = wordPosition + strlen(reservedWord);
         					sentence = sentence + strlen(reservedWord);
+
+        					// Se indica que se encuentra un componente
         					foundLexicComponent = 1;
+
+        					// No es necesario seguir iterando
         					break;
         				}
         			}
         		}
+
+        		// Si no encuentra nada, se avanza una sola posicion
         		if(foundLexicComponent == 0) {
         			wordPosition++;
         			sentence++;
@@ -182,3 +227,4 @@ int main (int argc, char *argv[]) {
 	fclose(entryFile);
 	fclose(exitFile);
 }
+
