@@ -9,65 +9,32 @@ char * relationalOperators[10] = {"==", "!=", "<=", ">=", "&&", "||", "<<", ">>"
 
 char * operatorsAndSigns[21] = {"(", ")", "{", "}", ",", ";", "*", "=", ":", "&", "-", "~", "|", "<", ">", "!", "?", "+", "/", "%", "^"};
 
+FILE * entryFile;
+
+FILE * exitFile;
+
 int foundLexicComponents(int argc, char * argv[]);
+int recognizeErrors(int argc, char * argv[]);
+int searchRelationalOperator(char * sentence, int wordPosition);
+int searchOperatorOrSign(char * sentence, int wordPosition);
+int searchReservedWord(char * sentence, int wordPosition);
 
 int main (int argc, char *argv[]) {
-
 	foundLexicComponents(argc, argv);
+	return 0;
 }
 
 int foundLexicComponents(int argc, char * argv[]) {
 		// Si no hay parametros
-	if (argc == 1) {
-		printf("Error: Faltan par\240metros.\n");
-		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
+	if(!recognizeErrors(argc, argv)) {
 		return 0;
-	}
-	// Si solo hay un parametro
-	else if (argc == 2) {
-		printf("Error: Falta par\240metro.\n");
-		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
-		return 0;
-	}
-	// Si hay demasiados parametros
-	else if (argc > 3) {
-		printf("Error: Demasiados par\240metros.\n");
-		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
-		return 0;
-	}
-	
-	// Se declara archivo de entrada
-	FILE * entryFile;
-
-	// Se abre el archivo y se entrega el nombre ingresado como parametro
-	entryFile = fopen(argv[1], "r");
-
-	// Se comprueba si existe
-	if (entryFile == NULL) {
-		printf("Error: El archivo de entrada no existe.\n");
-		return 0;
-	}
-
-	// Se declara archivo de salida
-	FILE * exitFile;
-
-	// Se abre en modo lectura para comprobar si existe
-	exitFile = fopen(argv[2], "r");
-
-	// Se comprueba si existe
-	if (exitFile != NULL){
-		printf("Error: El archivo de salida ya existe.\n");
-		return 0;	
-	}
-	else {
-		exitFile = fopen(argv[2], "w");
 	}
 
 	// Se declara la linea del archivo
 	char line[1024];
 
 	// Se declara la lista de palabras
-	char fileWords[1024][64];
+	char fileWords[1024][256];
 
 	// Contadores para los ciclos for
 	int i, j, h;
@@ -133,83 +100,28 @@ int foundLexicComponents(int argc, char * argv[]) {
         		foundLexicComponent = 0;
 
         		// Primero se analizar si hay un operador relacional
-        		for(j = 0; j < 10; j++) {
-
-        			// Se obtiene de la variable global
-        			char * relationalOperator = relationalOperators[j];
-
-        			// Se compara cada variable con la posicion actual de la frase analizada
-        			if(strncmp(sentence, relationalOperator, 2) == 0) {
-
-        				// Se escribe en el archivo
-        				fprintf(exitFile, "%s\n", relationalOperator);
-
-        				// Todos loos operadores relacionales tienen largo 2, por lo tanto la posicion cambia en 2
-        				wordPosition = wordPosition + 2;
-        				sentence = sentence + 2;
-
-        				// Se indica que se encontro un componente
-        				foundLexicComponent = 1;
-
-        				// Ya encontro uno asi que no es necesario que siga iterando -> break
-        				break;
-        			}
+        		if(searchRelationalOperator(sentence, wordPosition)) {
+        			sentence = sentence + 2;
+        			wordPosition = wordPosition + 2;
+        			foundLexicComponent = 1;
         		}
 
         		// Se analiza si hay un signo u operador
         		if(foundLexicComponent == 0){
-        			for(j = 0; j < 21; j++) {
-        				char * operatorOrSign = operatorsAndSigns[j];
-        				if(strncmp(sentence, operatorOrSign, 1) == 0) {
-
-        					// Se escribe en el archivo
-        					fprintf(exitFile, "%s\n", operatorOrSign);
-
-        					// Todos los signos u operadores tienen largo 1, la posicion cambia en 1
-        					wordPosition = wordPosition + 1;
-        					sentence = sentence + 1;
-
-        					// Se indica que se encontro un componente
-        					foundLexicComponent = 1;
-
-        					// No es necesario seguir iterando
-        					break;
-        				}
-        			}        			
+					if(searchOperatorOrSign(sentence, wordPosition)) {
+						sentence = sentence + 1;
+						wordPosition = wordPosition + 1;
+						foundLexicComponent = 1;
+					}      			
         		}
 
         		// Se analiza si hay una palabra reservada
         		if(foundLexicComponent == 0){
-        			for(j = 0; j < 23; j++) {
-        				char * reservedWord = reservedWords[j];
-        				if(strncmp(sentence, reservedWord, strlen(reservedWord)) == 0) {
-
-        					// En este caso se debe pasar a mayusculas antes de escribir
-        					char * ch = (char*)malloc(1 + strlen(reservedWord));
-        					char aux;
-        					strcpy(ch, reservedWord);
-        					int c = 0;
-
-        					while (ch[c] != '\0') {
-      							aux = ch[c];
-      							if (aux >= 'a' && aux <= 'z')
-         							ch[c] = ch[c] - 32;
-      							c++;  
-   							}
-
-   							// Se escribe
-   							fprintf(exitFile, "%s\n", ch);
-
-   							// La posicion depende del largo de la palabra reservada
-        					wordPosition = wordPosition + strlen(reservedWord);
-        					sentence = sentence + strlen(reservedWord);
-
-        					// Se indica que se encuentra un componente
-        					foundLexicComponent = 1;
-
-        					// No es necesario seguir iterando
-        					break;
-        				}
+        			int reservedWordLen = searchReservedWord(sentence, wordPosition);
+        			if(reservedWordLen != 0) {
+        				sentence = sentence + reservedWordLen;
+        				wordPosition = wordPosition + reservedWordLen;
+        				foundLexicComponent = 1;
         			}
         		}
 
@@ -226,5 +138,117 @@ int foundLexicComponents(int argc, char * argv[]) {
 	// Se cierran los archivos
 	fclose(entryFile);
 	fclose(exitFile);
+	return 1;
+}
+
+int recognizeErrors(int argc, char * argv[]) {
+	if (argc == 1) {
+		printf("Error: Faltan par\240metros.\n");
+		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
+		return 0;
+	}
+	// Si solo hay un parametro
+	else if (argc == 2) {
+		printf("Error: Falta par\240metro.\n");
+		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
+		return 0;
+	}
+	// Si hay demasiados parametros
+	else if (argc > 3) {
+		printf("Error: Demasiados par\240metros.\n");
+		printf("Uso: lexico.exe archivo_entrada archivo_salida\n");
+		return 0;
+	}
+
+	entryFile = fopen(argv[1], "r");
+
+	if (entryFile == NULL) {
+		printf("Error: El archivo de entrada no existe.\n");
+		return 0;
+	}
+
+		// Se abre en modo lectura para comprobar si existe
+	exitFile = fopen(argv[2], "r");
+
+	// Se comprueba si existe
+	if (exitFile != NULL){
+		printf("Error: El archivo de salida ya existe.\n");
+		return 0;	
+	}
+	else {	
+		exitFile = fopen(argv[2], "w");
+	}
+
+	return 1;
+}
+
+int searchRelationalOperator(char * sentence, int wordPosition) {
+	int j;
+
+	for(j = 0; j < 10; j++) {
+
+    	// Se obtiene de la variable global
+    	char * relationalOperator = relationalOperators[j];
+
+    	// Se compara cada variable con la posicion actual de la frase analizada
+    	if(strncmp(sentence, relationalOperator, 2) == 0) {
+
+        	// Se escribe en el archivo
+        	fprintf(exitFile, "%s\n", relationalOperator);
+
+        	// Se indica que se encontro un componente
+        	return 1;
+        }
+    }
+	return 0;
+}
+
+int searchOperatorOrSign(char * sentence, int wordPosition) {
+	int j;
+
+	for(j = 0; j < 21; j++) {
+
+        char * operatorOrSign = operatorsAndSigns[j];
+
+       	if(strncmp(sentence, operatorOrSign, 1) == 0) {
+
+        	// Se escribe en el archivo
+        	fprintf(exitFile, "%s\n", operatorOrSign);
+
+        	// No es necesario seguir iterando
+        	return 1;
+        }
+    }
+    return 0; 
+}
+
+int searchReservedWord(char * sentence, int wordPosition) {
+	int j;
+
+    for(j = 0; j < 23; j++) {
+        char * reservedWord = reservedWords[j];
+        if(strncmp(sentence, reservedWord, strlen(reservedWord)) == 0) {
+
+        	// En este caso se debe pasar a mayusculas antes de escribir
+        	char * ch = (char*)malloc(1 + strlen(reservedWord));
+        	char aux;
+        	strcpy(ch, reservedWord);
+        	int c = 0;
+
+        	while (ch[c] != '\0') {
+      			aux = ch[c];
+      			if (aux >= 'a' && aux <= 'z')
+         			ch[c] = ch[c] - 32;
+      				c++;  
+   			}
+
+   			// Se escribe
+   			fprintf(exitFile, "%s\n", ch);
+
+        	// No es necesario seguir iterando
+        	return strlen(reservedWord);
+        }
+    }
+    return 0;
 }
 
